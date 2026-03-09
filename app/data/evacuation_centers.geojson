@@ -1,0 +1,365 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_001",
+        "name": "Cebu City Sports Center",
+        "type": "gymnasium",
+        "barangay": "Sambag II",
+        "capacity": 5000,
+        "notes": "Primary city-wide evacuation center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8953,
+          10.3005
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_002",
+        "name": "University of the Philippines Cebu",
+        "type": "school",
+        "barangay": "Lahug",
+        "capacity": 2000,
+        "notes": "Open grounds used during large evacuations"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8986,
+          10.3235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_003",
+        "name": "Cebu City Hall / Plaza Independencia Area",
+        "type": "barangay_hall",
+        "barangay": "Santo Niño",
+        "capacity": 1000,
+        "notes": "City government complex, open plaza"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9019,
+          10.2935
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_004",
+        "name": "Abellana National School",
+        "type": "school",
+        "barangay": "Sambag II",
+        "capacity": 3000,
+        "notes": "Large school grounds designated as evacuation area"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8959,
+          10.3011
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_005",
+        "name": "Don Bosco Technology Center",
+        "type": "school",
+        "barangay": "Punta Princesa",
+        "capacity": 1500,
+        "notes": "Elevated location, suitable for flood evacuations"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8631,
+          10.2985
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_006",
+        "name": "University of San Carlos — Talamban Campus",
+        "type": "school",
+        "barangay": "Talamban",
+        "capacity": 4000,
+        "notes": "Large campus used as evacuation hub for northern Cebu City"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9113,
+          10.3559
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_007",
+        "name": "Cebu Normal University",
+        "type": "school",
+        "barangay": "San Antonio",
+        "capacity": 2500,
+        "notes": "Central location near downtown"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8969,
+          10.3016
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_008",
+        "name": "Pamutan Barangay Hall",
+        "type": "barangay_hall",
+        "barangay": "Pamutan",
+        "capacity": 400,
+        "notes": "Serves upland Pamutan area"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8456,
+          10.3411
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_009",
+        "name": "Labangon Elementary School",
+        "type": "school",
+        "barangay": "Labangon",
+        "capacity": 1200,
+        "notes": "Designated evacuation center for Labangon and adjacent barangays"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8778,
+          10.2974
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_010",
+        "name": "Pasil Elementary School",
+        "type": "school",
+        "barangay": "Pasil",
+        "capacity": 800,
+        "notes": "Coastal barangay evacuation center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8875,
+          10.2913
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_011",
+        "name": "Apas Barangay Hall",
+        "type": "barangay_hall",
+        "barangay": "Apas",
+        "capacity": 500,
+        "notes": "Upland area, less flood risk"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9044,
+          10.3312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_012",
+        "name": "Cebu Doctors' University",
+        "type": "school",
+        "barangay": "Subangdaku",
+        "capacity": 2000,
+        "notes": "Hospital and school facilities available"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9331,
+          10.3199
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_013",
+        "name": "Tejero Elementary School",
+        "type": "school",
+        "barangay": "Tejero",
+        "capacity": 700,
+        "notes": "Serves coastal Tejero and adjacent areas"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9072,
+          10.3006
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_014",
+        "name": "San Nicolas Elementary School",
+        "type": "school",
+        "barangay": "San Nicolas Proper",
+        "capacity": 900,
+        "notes": "Near downtown, serves central barangays"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8833,
+          10.2935
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_015",
+        "name": "Talamban Barangay Hall",
+        "type": "barangay_hall",
+        "barangay": "Talamban",
+        "capacity": 600,
+        "notes": "Serves northern residential areas"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9126,
+          10.3621
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_016",
+        "name": "Guadalupe Elementary School",
+        "type": "school",
+        "barangay": "Guadalupe",
+        "capacity": 1500,
+        "notes": "Hillside school, safe from coastal flooding"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8846,
+          10.3216
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_017",
+        "name": "Banawa Barangay Hall",
+        "type": "barangay_hall",
+        "barangay": "Guadalupe",
+        "capacity": 450,
+        "notes": "Serves Banawa and Kinasang-an area"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.8810,
+          10.3120
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_018",
+        "name": "Carreta Elementary School",
+        "type": "school",
+        "barangay": "Carreta",
+        "capacity": 1000,
+        "notes": "Centrally located in the northern city area"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9101,
+          10.3088
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_019",
+        "name": "Pit-os Barangay Hall",
+        "type": "barangay_hall",
+        "barangay": "Pit-os",
+        "capacity": 350,
+        "notes": "Upland barangay, used for lahar/landslide evacuees from surrounding hills"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9189,
+          10.3871
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ec_020",
+        "name": "Mabolo Elementary School",
+        "type": "school",
+        "barangay": "Mabolo",
+        "capacity": 1200,
+        "notes": "Serves busy Mabolo district"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          123.9145,
+          10.3135
+        ]
+      }
+    }
+  ]
+}

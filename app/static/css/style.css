@@ -1,0 +1,8 @@
+#map{ width: 100%; height: 68vh; }
+#cesiumContainer{ width: 100%; height: 68vh; }
+#statsBox{
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.layers-panel{ max-height: 240px; overflow: auto; }
+.map-toolbar{ border-bottom: 1px solid #eee; }

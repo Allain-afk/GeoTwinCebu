@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Cebu Evacuation Route Finder</title>
+  <meta name="description" content="Find the nearest evacuation center from your location in Cebu City. Shows safest routes, flood and landslide risk areas." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --blue-dark: #1e3a5f;
+      --surface: #ffffff;
+      --bg: #f0f4f8;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --safe: #16a34a;
+      --warn: #f59e0b;
+      --header-h: 54px;
+      --drawer-peek: 80px;   /* visible strip on mobile when drawer is collapsed */
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); overflow: hidden; }
+
+    /* ════════════════════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════════════════════ */
+    .app-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
+      height: var(--header-h);
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
+      color: #fff;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.28);
+    }
+    .header-logo { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+    .header-text h1 { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+    .header-text p  { font-size: .7rem; opacity: .8; }
+    .header-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.3);
+      font-size: .68rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       MAP — always full screen behind everything
+    ════════════════════════════════════════════════════════ */
+    #map {
+      position: fixed;
+      top: var(--header-h); left: 0; right: 0; bottom: 0;
+      z-index: 0;
+    }
+
+    /* Basemap switcher overlay on map */
+    .map-toolbar {
+      position: fixed;
+      top: calc(var(--header-h) + 10px);
+      right: 10px;
+      z-index: 500;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 5px 10px;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.14);
+      font-size: .75rem;
+    }
+    .map-toolbar select {
+      border: 1px solid var(--border); border-radius: 7px;
+      padding: 3px 7px; font-size: .75rem; cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       DESKTOP SIDEBAR  (≥768px)
+    ════════════════════════════════════════════════════════ */
+    @media (min-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: var(--header-h); left: 0;
+        width: 360px; bottom: 0;
+        z-index: 400;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        display: flex; flex-direction: column;
+      }
+      .mobile-drawer-handle { display: none; }
+      .mobile-find-fab { display: none; }
+      #map { left: 360px; }
+      .map-toolbar { right: 10px; }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       MOBILE BOTTOM DRAWER  (<768px)
+    ════════════════════════════════════════════════════════ */
+    @media (max-width: 767px) {
+      .sidebar {
+        position: fixed;
+        left: 0; right: 0;
+        bottom: 0;
+        z-index: 400;
+        background: var(--surface);
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+        transition: transform .35s cubic-bezier(.4,0,.2,1);
+        /* default: show only the peek strip */
+        transform: translateY(calc(100% - var(--drawer-peek)));
+        max-height: 85vh;
+        display: flex; flex-direction: column;
+        overflow: hidden;
+      }
+      .sidebar.drawer-open {
+        transform: translateY(0);
+        overflow-y: auto;
+      }
+      /* Drag handle strip */
+      .mobile-drawer-handle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 0 2px;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .handle-pill {
+        width: 36px; height: 4px;
+        background: #cbd5e1; border-radius: 999px; margin-bottom: 6px;
+      }
+      .drawer-peek-label {
+        font-size: .78rem; font-weight: 600; color: var(--blue);
+        display: flex; align-items: center; gap: 5px;
+      }
+      /* FAB "Find" button — always visible on mobile when drawer is closed */
+      .mobile-find-fab {
+        position: fixed;
+        bottom: calc(var(--drawer-peek) + 14px);
+        left: 50%; transform: translateX(-50%);
+        z-index: 500;
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+        color: #fff;
+        border: none; border-radius: 999px;
+        padding: 13px 28px;
+        font-size: .9rem; font-weight: 700;
+        display: flex; align-items: center; gap: 8px;
+        box-shadow: 0 4px 20px rgba(37,99,235,.45);
+        cursor: pointer;
+        transition: opacity .2s, transform .15s;
+        white-space: nowrap;
+      }
+      .mobile-find-fab:hover { opacity: .9; transform: translateX(-50%) translateY(-2px); }
+      .mobile-find-fab.hidden { display: none; }
+      /* Map takes full screen on mobile */
+      #map { left: 0; right: 0; bottom: 0; }
+      .map-toolbar { top: calc(var(--header-h) + 8px); right: 8px; }
+      /* Compact header on narrow screens */
+      .header-text p { display: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       SIDEBAR INNER CONTENT
+    ════════════════════════════════════════════════════════ */
+    .sidebar-inner { padding: 12px 16px 24px; flex: 1; min-height: 0; }
+
+    .step-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--blue); color: #fff;
+      font-size: .68rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 600; font-size: .82rem; color: var(--text);
+      margin-bottom: 10px;
+    }
+    .section-card {
+      background: #f8fafc; border: 1px solid var(--border);
+      border-radius: 12px; padding: 13px; margin-bottom: 12px;
+    }
+
+    /* ── Location buttons ────────────────────────────── */
+    .location-btn {
+      width: 100%; border-radius: 9px; font-weight: 600; font-size: .82rem;
+      padding: 11px 14px; display: flex; align-items: center; gap: 7px;
+      justify-content: center; cursor: pointer; transition: all .18s;
+      border: 2px solid var(--blue); color: var(--blue); background: transparent;
+      font-family: inherit; min-height: 44px;
+    }
+    .location-btn:hover, .location-btn.active { background: var(--blue); color: #fff; }
+
+    .or-divider {
+      text-align: center; color: #94a3b8; font-size: .72rem;
+      margin: 8px 0; position: relative;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: var(--border);
+    }
+    .or-divider::before { left: 0; } .or-divider::after { right: 0; }
+
+    .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .form-label-sm { font-size: .7rem; font-weight: 600; color: var(--muted); margin-bottom: 3px; display: block; }
+    .form-ctrl {
+      border-radius: 8px; font-size: .82rem; font-family: inherit;
+      border: 1.5px solid var(--border); padding: 8px 10px;
+      width: 100%; transition: border-color .18s; background: #fff;
+      min-height: 40px;
+    }
+    .form-ctrl:focus { outline: none; border-color: var(--blue); }
+
+    .map-hint { font-size: .7rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+
+    /* ── Hazard toggles ──────────────────────────────── */
+    .hazard-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+      font-size: .82rem; color: var(--text);
+    }
+    .hazard-item:last-child { border-bottom: none; }
+    .hazard-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+    .form-switch .form-check-input { width: 2.2em; cursor: pointer; }
+
+    /* ── Desktop find button ─────────────────────────── */
+    #findRouteBtn {
+      width: 100%; background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      color: #fff; border: none; border-radius: 12px; padding: 13px;
+      font-size: .9rem; font-weight: 700; cursor: pointer;
+      transition: opacity .18s, transform .1s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 10px; min-height: 48px;
+    }
+    #findRouteBtn:hover { opacity: .9; transform: translateY(-1px); }
+    #findRouteBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Status ─────────────────────────────────────── */
+    #statusMsg { font-size: .76rem; min-height: 18px; margin-bottom: 6px; text-align: center; }
+    .spinner-sm {
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid var(--blue); border-top-color: transparent;
+      border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results ─────────────────────────────────────── */
+    #resultsPanel { display: none; }
+
+    .result-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .result-card.primary { border-color: var(--blue); background: linear-gradient(135deg, #eff6ff, var(--surface)); }
+
+    .center-name { font-weight: 700; font-size: .92rem; color: var(--blue-dark); margin-bottom: 3px; }
+    .center-meta { font-size: .73rem; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+
+    .route-stats { display: flex; gap: 10px; margin-bottom: 10px; }
+    .stat-box { flex: 1; background: #eff6ff; border-radius: 9px; padding: 8px; text-align: center; }
+    .stat-label { font-size: .64rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .stat-value { font-size: .9rem; font-weight: 700; color: var(--blue-dark); margin-top: 2px; }
+
+    .gmaps-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: #4285f4; color: #fff; border: none; border-radius: 9px;
+      padding: 10px 14px; font-size: .82rem; font-weight: 600;
+      cursor: pointer; width: 100%; text-decoration: none;
+      transition: background .18s; min-height: 44px; font-family: inherit;
+    }
+    .gmaps-btn:hover { background: #3367d6; color: #fff; }
+
+    .hazard-warning {
+      background: #fef3c7; border: 1.5px solid var(--warn);
+      border-radius: 10px; padding: 9px 12px;
+      font-size: .78rem; color: #92400e; margin-bottom: 10px; line-height: 1.5;
+    }
+    .hazard-safe {
+      background: #dcfce7; border: 1.5px solid #22c55e;
+      border-radius: 10px; padding: 9px 12px;
+      font-size: .78rem; color: #14532d; margin-bottom: 10px; line-height: 1.5;
+    }
+
+    .alt-title { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px; }
+    .alt-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; background: #f8fafc;
+      border-radius: 9px; margin-bottom: 6px;
+      border: 1.5px solid transparent; transition: border-color .15s;
+      font-size: .78rem; cursor: pointer; min-height: 44px;
+    }
+    .alt-item:hover { border-color: #93c5fd; }
+    .alt-icon { font-size: 1.1rem; }
+    .alt-name { font-weight: 600; color: var(--text); }
+    .alt-dist { color: var(--muted); font-size: .7rem; }
+    .route-src-note { font-size: .67rem; color: #94a3b8; text-align: center; margin-top: 4px; }
+
+    /* ── Accordion tweaks ────────────────────────────── */
+    .accordion-button { font-size: .8rem; font-weight: 600; padding: 9px 12px; }
+    .accordion-body { padding: 10px 12px; font-size: .78rem; }
+
+    /* ── Footer ─────────────────────────────────────── */
+    .sidebar-footer {
+      font-size: .65rem; color: #94a3b8;
+      padding: 8px 16px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* Leaflet popup tweaks */
+    .leaflet-popup-content-wrapper { border-radius: 12px; font-family: 'Inter', sans-serif; }
+    .leaflet-popup-content { font-size: .8rem; line-height: 1.5; min-width: 160px; }
+    .popup-name { font-weight: 700; color: var(--blue-dark); margin-bottom: 2px; }
+    .popup-type { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: .66rem; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-bottom: 5px; }
+    .popup-cap { font-size: .73rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <span class="header-logo">🆘</span>
+  <div class="header-text">
+    <h1>Cebu Evacuation Route Finder</h1>
+    <p>Find the nearest evacuation center from your location</p>
+  </div>
+  <span class="header-badge">Cebu City</span>
+</header>
+
+<!-- ── Map (behind everything) ─────────────────────────────────────────────── -->
+<div id="map"></div>
+
+<!-- ── Basemap toolbar ─────────────────────────────────────────────────────── -->
+<div class="map-toolbar">
+  <i class="bi bi-layers" style="color:var(--blue);"></i>
+  <select id="basemapSelect" aria-label="Basemap"></select>
+</div>
+
+<!-- ── Mobile FAB (always-visible Find button when drawer is peeking) ──────── -->
+<button class="mobile-find-fab" id="mobileFab" onclick="findRoute()">
+  <i class="bi bi-signpost-2-fill"></i> Find Evacuation Center
+</button>
+
+<!-- ── Sidebar / Bottom Drawer ─────────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+
+  <!-- Mobile drag handle (toggle drawer) -->
+  <div class="mobile-drawer-handle" id="drawerHandle" onclick="toggleDrawer()">
+    <div class="handle-pill"></div>
+    <span class="drawer-peek-label"><i class="bi bi-chevron-up"></i> Set Your Location</span>
+  </div>
+
+  <div class="sidebar-inner">
+
+    <!-- ① Location -->
+    <div class="section-card">
+      <div class="step-header"><span class="step-badge">1</span> Set Your Location</div>
+
+      <button class="location-btn mb-2" id="useMyLocationBtn" onclick="pinMyLocation()">
+        <i class="bi bi-geo-alt-fill"></i> Use My Location (GPS)
+      </button>
+
+      <div class="or-divider">or click / tap the map</div>
+
+      <div style="margin-top:9px;">
+        <div class="coord-row">
+          <div>
+            <label class="form-label-sm" for="latInput">Latitude</label>
+            <input class="form-ctrl" type="number" id="latInput" placeholder="10.3157" step="0.0001" inputmode="decimal">
+          </div>
+          <div>
+            <label class="form-label-sm" for="lonInput">Longitude</label>
+            <input class="form-ctrl" type="number" id="lonInput" placeholder="123.8854" step="0.0001" inputmode="decimal">
+          </div>
+        </div>
+        <button class="location-btn mt-2" onclick="pinCoordinates()" style="font-size:.78rem;padding:8px;">
+          <i class="bi bi-pin-map"></i> Pin These Coordinates
+        </button>
+      </div>
+
+      <div class="map-hint"><i class="bi bi-info-circle"></i> Or tap anywhere on the map to drop a pin.</div>
+
+      <!-- Advanced / Technical Description -->
+      <div class="accordion mt-3" id="advAccordion">
+        <div class="accordion-item" style="border-radius:9px;border:1px solid var(--border);">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button"
+              data-bs-toggle="collapse" data-bs-target="#manualBoundary" style="border-radius:9px;">
+              <i class="bi bi-code-square me-2"></i> Advanced: Paste Technical Description
+            </button>
+          </h2>
+          <div id="manualBoundary" class="accordion-collapse collapse" data-bs-parent="#advAccordion">
+            <div class="accordion-body">
+              <label class="form-label-sm" for="manualType">Input type</label>
+              <select class="form-ctrl mb-2" id="manualType">
+                <option value="manual_vertices">Vertex list (lat lon per line)</option>
+                <option value="coords_csv">CSV table (E, N headers)</option>
+                <option value="traverse">Traverse (START: lat,lon + bearings)</option>
+              </select>
+              <label class="form-label-sm" for="manualCrs">CRS</label>
+              <input class="form-ctrl mb-2" id="manualCrs" value="EPSG:4326">
+              <textarea class="form-ctrl" rows="4" id="manualText" placeholder="Paste coordinates here…" style="resize:vertical;"></textarea>
+              <button class="location-btn mt-2" style="font-size:.78rem;padding:8px;" onclick="parseBoundary()">
+                <i class="bi bi-check2-circle"></i> Parse &amp; Use as Location
+              </button>
+              <div class="map-hint mt-1" id="qaBox" style="flex-wrap:wrap;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② Hazard Layers -->
+    <div class="section-card">
+      <div class="step-header">
+        <span class="step-badge">2</span>
+        Show Risk Layers
+        <span style="font-size:.68rem;font-weight:400;color:var(--muted);">(optional)</span>
+      </div>
+      <div id="hazardLayersPanel"></div>
+    </div>
+
+    <!-- ③ Find Route (desktop) -->
+    <button id="findRouteBtn" onclick="findRoute()">
+      <i class="bi bi-signpost-2-fill"></i> Find Nearest Evacuation Center
+    </button>
+    <div id="statusMsg" class="text-muted"></div>
+
+    <!-- Results -->
+    <div id="resultsPanel">
+      <div id="hazardWarnings"></div>
+      <div class="result-card primary" id="primaryResult"></div>
+      <div id="alternativesSection"></div>
+    </div>
+
+  </div><!-- /sidebar-inner -->
+
+  <div class="sidebar-footer">
+    Data: LiPAD FMC · MGB · OpenStreetMap · OSRM<br>
+    Evacuation centers are indicative. Always follow official NDRRMC / LGU instructions.
+  </div>
+
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

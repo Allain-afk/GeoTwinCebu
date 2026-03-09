@@ -1,0 +1,18 @@
+# Python / environment
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# App runtime dirs
+app/data_cache/
+app/uploads/
+app/outputs/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
