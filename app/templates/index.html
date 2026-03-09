@@ -154,9 +154,9 @@
       /* FAB "Find" button — always visible on mobile when drawer is closed */
       .mobile-find-fab {
         position: fixed;
-        bottom: calc(var(--drawer-peek) + 14px);
+        bottom: calc(var(--drawer-peek) + 18px);
         left: 50%; transform: translateX(-50%);
-        z-index: 500;
+        z-index: 501;
         background: linear-gradient(135deg, var(--blue-dark), var(--blue));
         color: #fff;
         border: none; border-radius: 999px;
@@ -170,6 +170,13 @@
       }
       .mobile-find-fab:hover { opacity: .9; transform: translateX(-50%) translateY(-2px); }
       .mobile-find-fab.hidden { display: none; }
+      /* Hide footer in mobile view to avoid overlap */
+      .sidebar-footer { display: none; }
+      /* Prevent inner content from overflowing onto footer — scroll internally */
+      .sidebar.drawer-open .sidebar-inner {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
       /* Map takes full screen on mobile */
       #map { left: 0; right: 0; bottom: 0; }
       .map-toolbar { top: calc(var(--header-h) + 8px); right: 8px; }
