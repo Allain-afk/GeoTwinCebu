@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 .env
+.env.vercel
 
 # App runtime dirs
 app/data_cache/
@@ -16,3 +17,5 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+.vercel
