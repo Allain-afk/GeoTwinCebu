@@ -25,11 +25,15 @@ from geo.routing import (
 )
 
 APP_DIR = Path(__file__).resolve().parent
-CACHE_DIR = APP_DIR / "data_cache"
 DATA_DIR = APP_DIR / "data"
 
-for p in (CACHE_DIR,):
-    p.mkdir(exist_ok=True)
+# Vercel serverless has read-only filesystem — use /tmp for cache
+if os.environ.get("VERCEL"):
+    CACHE_DIR = Path("/tmp/geotwin_cache")
+else:
+    CACHE_DIR = APP_DIR / "data_cache"
+
+CACHE_DIR.mkdir(exist_ok=True, parents=True)
 
 # Load evacuation centers once at startup
 CENTERS_FC = json.loads((DATA_DIR / "evacuation_centers.geojson").read_text(encoding="utf-8"))
