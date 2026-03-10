@@ -170,8 +170,6 @@
       }
       .mobile-find-fab:hover { opacity: .9; transform: translateX(-50%) translateY(-2px); }
       .mobile-find-fab.hidden { display: none; }
-      /* Hide footer in mobile view to avoid overlap */
-      .sidebar-footer { display: none; }
       /* Prevent inner content from overflowing onto footer — scroll internally */
       .sidebar.drawer-open .sidebar-inner {
         overflow-y: auto;
@@ -323,14 +321,6 @@
     .accordion-button { font-size: .8rem; font-weight: 600; padding: 9px 12px; }
     .accordion-body { padding: 10px 12px; font-size: .78rem; }
 
-    /* ── Footer ─────────────────────────────────────── */
-    .sidebar-footer {
-      font-size: .65rem; color: #94a3b8;
-      padding: 8px 16px 16px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
     /* Leaflet popup tweaks */
     .leaflet-popup-content-wrapper { border-radius: 12px; font-family: 'Inter', sans-serif; }
     .leaflet-popup-content { font-size: .8rem; line-height: 1.5; min-width: 160px; }
@@ -444,9 +434,12 @@
       <div id="hazardLayersPanel"></div>
     </div>
 
-    <!-- ③ Find Route (desktop) -->
+    <!-- ③ Find Route -->
     <button id="findRouteBtn" onclick="findRoute()">
       <i class="bi bi-signpost-2-fill"></i> Find Nearest Evacuation Center
+    </button>
+    <button type="button" id="downloadPdfBtn" class="location-btn mt-2" onclick="downloadPdfReport()">
+      <i class="bi bi-file-pdf"></i> Download PDF Report
     </button>
     <div id="statusMsg" class="text-muted"></div>
 
@@ -459,14 +452,10 @@
 
   </div><!-- /sidebar-inner -->
 
-  <div class="sidebar-footer">
-    Data: LiPAD FMC · MGB · OpenStreetMap · OSRM<br>
-    Evacuation centers are indicative. Always follow official NDRRMC / LGU instructions.
-  </div>
-
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="/static/js/app.js"></script>
 </body>
 </html>

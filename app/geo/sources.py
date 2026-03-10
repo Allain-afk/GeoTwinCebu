@@ -24,6 +24,7 @@ LAYERS: Dict[str, Dict[str, Any]] = {
         "fetch": {"type": "wfs", "url": LIPAD_WFS, "typeName": "geonode:ph072217000_fh5yr_10m"},
         "style": {"color": "#2b83ba", "fillOpacity": 0.35, "weight": 1},
         "legend": "Areas prone to flooding in a 5-year rain event.",
+        "extrusion_height": 200,
     },
     "lipad_flood_100yr": {
         "title": "Flood Risk — 100-year",
@@ -32,6 +33,7 @@ LAYERS: Dict[str, Dict[str, Any]] = {
         "fetch": {"type": "wfs", "url": LIPAD_WFS, "typeName": "geonode:ph072217000_fh100yr_10m"},
         "style": {"color": "#1d4ed8", "fillOpacity": 0.28, "weight": 1},
         "legend": "Areas prone to flooding in an extreme 100-year rain event.",
+        "extrusion_height": 250,
     },
     "mgb_landslide_susc": {
         "title": "Landslide Risk",
@@ -41,6 +43,7 @@ LAYERS: Dict[str, Dict[str, Any]] = {
         "style": {"color": "#b91c1c", "fillOpacity": 0.25, "weight": 1},
         "legend": "Areas susceptible to landslides (MGB data).",
         "attrs_hint": ["LandslideSus", "LS", "SUSCEPT", "CLASS", "LANDSLIDE"],
+        "extrusion_height": 300,
     },
 }
 

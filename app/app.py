@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 from pathlib import Path
@@ -7,15 +8,20 @@ from pathlib import Path
 # Load .env when running locally (no-op in Vercel where env vars are set via dashboard)
 try:
     from dotenv import load_dotenv
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    _root = Path(__file__).resolve().parent.parent
+    load_dotenv(_root / ".env")
+    load_dotenv()  # fallback: cwd
 except ImportError:
     pass
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, Response, render_template, request, jsonify
 
 from geo.sources import LAYERS, BASEMAPS, fetch_layer_geojson, clear_cache_if_requested
 from geo.boundary import parse_aoi, parse_manual_vertices_text, parse_coords_csv_text, parse_traverse_text
 from geo.analysis import check_hazard_at_point
+from geo.report import run_aoi_analysis
+from geo.pdf_builder import build_report_pdf
+from geo.utils import convert_wgs84_to_prs92, get_elevation_data
 from geo.routing import (
     find_nearest_centers,
     get_osrm_route,
@@ -49,6 +55,11 @@ def index():
     return render_template("index.html", layers=LAYERS, basemaps=BASEMAPS)
 
 
+@app.get("/favicon.ico")
+def favicon():
+    return Response(b"", status=204)
+
+
 # ── API: metadata ─────────────────────────────────────────────────────────────
 
 @app.get("/api/metadata")
@@ -58,6 +69,7 @@ def api_metadata():
         "kind": v["kind"],
         "style": v.get("style", {}),
         "legend": v.get("legend", ""),
+        "extrusion_height": v.get("extrusion_height"),
     } for k, v in LAYERS.items()}, "basemaps": BASEMAPS})
 
 
@@ -181,6 +193,128 @@ def api_route():
         "hazard_warnings": hazard_warnings,
         "alternatives": alternatives,
     })
+
+
+# ── API: AOI analysis (GeoTwin workflow) ────────────────────────────────────────
+
+@app.post("/api/analyze")
+def api_analyze():
+    """Run AOI-based analysis: stats and interpretation for active layers."""
+    payload = request.get_json(force=True)
+    aoi = payload.get("aoi")
+    active_layers = payload.get("active_layers") or []
+    options = payload.get("options") or {}
+    if not aoi:
+        return jsonify({"ok": False, "error": "aoi is required."}), 400
+    clear_cache_if_requested(CACHE_DIR, options)
+    result = run_aoi_analysis(aoi, active_layers, CACHE_DIR)
+    if "error" in result:
+        return jsonify({"ok": False, "error": result["error"]}), 400
+    return jsonify({
+        "ok": True,
+        "stats": result["stats"],
+        "interpretation": result["interpretation"],
+        "layer_summaries": result["layer_summaries"],
+    })
+
+
+# ── API: PDF report ──────────────────────────────────────────────────────────
+
+@app.post("/api/report-pdf")
+def api_report_pdf():
+    """Generate PDF report from AOI analysis."""
+    try:
+        payload = request.get_json(force=True)
+    except Exception:
+        return jsonify({"ok": False, "error": "Invalid JSON body."}), 400
+    aoi = payload.get("aoi")
+    active_layers = payload.get("active_layers") or []
+    map_image_b64 = payload.get("map_image")
+    route_info = payload.get("route_info") or {}
+    options = payload.get("options") or {}
+    if not aoi:
+        return jsonify({"ok": False, "error": "aoi is required."}), 400
+    try:
+        clear_cache_if_requested(CACHE_DIR, options)
+        result = run_aoi_analysis(aoi, active_layers, CACHE_DIR)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Analysis failed: {e!s}"}), 500
+    if "error" in result:
+        return jsonify({"ok": False, "error": result["error"]}), 400
+
+    route_data = None
+    if route_info:
+        origin_lat = route_info.get("origin_lat")
+        origin_lon = route_info.get("origin_lon")
+        dest_lat = route_info.get("dest_lat")
+        dest_lon = route_info.get("dest_lon")
+        dest_name = route_info.get("dest_name")
+        duration_text = route_info.get("duration_text")
+        distance_text = route_info.get("distance_text")
+
+        origin = None
+        if origin_lat is not None and origin_lon is not None:
+            try:
+                prs92 = convert_wgs84_to_prs92(float(origin_lat), float(origin_lon))
+                origin = {
+                    "lat": float(origin_lat),
+                    "lon": float(origin_lon),
+                    "prs92": prs92,
+                }
+            except (TypeError, ValueError):
+                pass
+
+        destination = None
+        if dest_lat is not None and dest_lon is not None:
+            try:
+                prs92 = convert_wgs84_to_prs92(float(dest_lat), float(dest_lon))
+                elev = get_elevation_data(float(dest_lat), float(dest_lon))
+                destination = {
+                    "name": dest_name or "N/A",
+                    "lat": float(dest_lat),
+                    "lon": float(dest_lon),
+                    "prs92": prs92,
+                    "elevation": elev,
+                }
+            except (TypeError, ValueError):
+                pass
+
+        trip = None
+        if duration_text or distance_text:
+            trip = {
+                "duration_text": duration_text or "N/A",
+                "distance_text": distance_text or "N/A",
+            }
+
+        if origin or destination or trip:
+            route_data = {
+                "origin": origin,
+                "destination": destination,
+                "trip": trip,
+            }
+
+    map_image = None
+    if map_image_b64:
+        try:
+            map_image = base64.b64decode(map_image_b64)
+        except (TypeError, ValueError):
+            pass
+
+    try:
+        pdf_bytes = build_report_pdf(
+            stats=result["stats"],
+            interpretation=result["interpretation"],
+            layer_summaries=result["layer_summaries"],
+            route_data=route_data,
+            map_image=map_image,
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"PDF generation failed: {e!s}"}), 500
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=geotwin_report.pdf"},
+    )
 
 
 # ── API: hazard layer GeoJSON (for map overlay) ───────────────────────────────

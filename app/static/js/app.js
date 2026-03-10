@@ -4,6 +4,7 @@ let userMarker = null, routeLayer = null;
 let userLat = null, userLon = null;
 let metadata = null;
 let drawerOpen = false;
+let currentRouteData = null;
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 function $(id) { return document.getElementById(id); }
@@ -219,6 +220,7 @@ async function findRoute() {
     }).then(r => r.json());
 
     if (!data.ok) { setStatus(data.error || "Routing failed.", "danger"); return; }
+    currentRouteData = data;
     renderResults(data);
     renderRouteOnMap(data);
     setStatus("Route found ✓", "success");
@@ -284,6 +286,72 @@ function renderRouteOnMap(data) {
     .addTo(routeLayer);
   const bounds = routeLayer.getBounds();
   if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+}
+
+/* ── Download PDF Report ──────────────────────────────────────────── */
+async function downloadPdfReport() {
+  const btn = $("downloadPdfBtn");
+  if (btn) btn.disabled = true;
+  setStatus("<span class=\"spinner-sm\"></span> Capturing map…");
+  let mapImageBase64 = null;
+  try {
+    if (typeof html2canvas === "function") {
+      const canvas = await html2canvas($("map"), { useCORS: true });
+      const dataUrl = canvas.toDataURL("image/png");
+      mapImageBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+    }
+  } catch (e) {
+    console.warn("Map capture failed:", e);
+  }
+  setStatus("<span class=\"spinner-sm\"></span> Generating report…");
+
+  const b = map.getBounds();
+  const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+  const activeLayers = Object.keys(metadata.layers).filter(lid => document.getElementById(`layer_${lid}`)?.checked);
+
+  const routeInfo = {};
+  if (userLat != null && userLon != null) {
+    routeInfo.origin_lat = userLat;
+    routeInfo.origin_lon = userLon;
+  }
+  if (currentRouteData?.center) {
+    routeInfo.dest_lat = currentRouteData.center.lat;
+    routeInfo.dest_lon = currentRouteData.center.lon;
+    routeInfo.dest_name = currentRouteData.center.name;
+  }
+  if (currentRouteData?.duration_label) routeInfo.duration_text = currentRouteData.duration_label;
+  if (currentRouteData?.distance_label) routeInfo.distance_text = currentRouteData.distance_label;
+
+  const payload = {
+    aoi: { bbox },
+    active_layers: activeLayers,
+    map_image: mapImageBase64,
+    route_info: Object.keys(routeInfo).length ? routeInfo : undefined,
+  };
+
+  try {
+    const res = await fetch("/api/report-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setStatus("Report failed: " + (err.error || res.status), "danger");
+      return;
+    }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "geotwin_report.pdf";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus("PDF downloaded ✓", "success");
+  } catch (e) {
+    setStatus("Error: " + e.message, "danger");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 /* ── Bootstrap ────────────────────────────────────────────────────── */

@@ -5,7 +5,7 @@ import re
 from typing import Tuple
 
 import pandas as pd
-from shapely.geometry import Polygon, mapping, shape, Point
+from shapely.geometry import Polygon, mapping, shape, Point, box
 from shapely.ops import transform
 from pyproj import Transformer
 
@@ -15,6 +15,13 @@ PRS92_ZONE4 = "EPSG:3124"
 def parse_aoi(aoi_obj):
     if not aoi_obj:
         return None
+    # bbox: [minLon, minLat, maxLon, maxLat] or {"bbox": [minLon, minLat, maxLon, maxLat]}
+    if isinstance(aoi_obj, (list, tuple)) and len(aoi_obj) == 4:
+        return box(aoi_obj[0], aoi_obj[1], aoi_obj[2], aoi_obj[3])
+    if isinstance(aoi_obj, dict) and "bbox" in aoi_obj:
+        b = aoi_obj["bbox"]
+        if len(b) == 4:
+            return box(b[0], b[1], b[2], b[3])
     if isinstance(aoi_obj, dict) and aoi_obj.get("type") == "circle":
         center = aoi_obj.get("center")
         r_m = float(aoi_obj.get("radius_m", 1000))
